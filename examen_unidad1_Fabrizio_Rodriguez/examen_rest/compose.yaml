@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql_db
+    environment:
+      MYSQL_DATABASE: laboratorio
+      MYSQL_USER: laboratorio
+      MYSQL_PASSWORD: laboratorio
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://laboratorio:laboratorio@mysql:3306/laboratorio
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

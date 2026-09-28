@@ -1,0 +1,26 @@
+1. Explica dos diferencias entre una API REST y un servidor GraphQL. (2 pts)
+Respuesta:
+API REST usa varios endpoints mientras que GraphQL utiliza uno solo.
+En REST la respuesta es fija por el server y en GraphQL el usuario pide solo lo que necesite.
+
+2. Indica una situación en la que conviene usar REST y otra en la que conviene usar GraphQL. (2 pts)
+Respuesta:
+En CRUD sencillos se usa REST y en app móviles GraphQL.
+
+
+3. ¿Qué diferencia hay entre una imagen y un contenedor? ¿Qué papel cumple el Dockerfile en esa relación?
+(2 pts)
+Respuesta:
+La imagen es una plantilla estática de lectura con sus dependencias, el contenedor es la instancia en ejecución que se basa de la imagen y el dockerfile es el archivo de instrucciones que usa Docker.
+
+
+4. ¿Para qué sirve Docker Compose? En el mapeo 8000:8000, ¿qué representa el primer 8000 y qué
+representa el segundo? (2 pts)
+Respuesta:
+Sirve para gestionar y ejecutar múltiples contenedores al mismo tiempo. El primer puerto es de mi máquina y el segundo es el puerto interno del contenedor.
+
+
+5. ¿Por qué las laptops del ejercicio 1 se guardan en MySQL y no en una lista de Python? ¿Qué identifica la llave primaria id? (2 pts)
+Respuesta:
+Se guardan en MySQL de forma permanente para no perderla en un reinicio.
+Y la primary key es el id que identifica cada laptop.
