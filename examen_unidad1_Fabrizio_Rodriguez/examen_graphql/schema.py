@@ -1,5 +1,5 @@
-from typing import Optional
 import strawberry
+from typing import Optional, List
 
 @strawberry.type
 class Instructor:
@@ -19,57 +19,87 @@ class AgregarTallerInput:
     cupo: int
     activo: bool
 
-DATOS_INICIALES = [
-    Taller(
-        nombre="Python para backend",
-        instructor=Instructor(nombre="Ana López"),
-        cupo=20,
-        activo=True,
-    ),
-    Taller(
-        nombre="Introducción a Docker",
-        instructor=Instructor(nombre="Carlos Ruiz"),
-        cupo=15,
-        activo=False,
-    ),
-    Taller(
-        nombre="Consultas con GraphQL",
-        instructor=Instructor(nombre="Ana López"),
-        cupo=25,
-        activo=True,
-    ),
+@strawberry.type
+class Role:
+    id: strawberry.ID
+    code: str
+    name: str
+    is_active: bool
+
+@strawberry.type
+class Permission:
+    id: strawberry.ID
+    code: str
+    name: str
+    is_active: bool
+
+talleres_db = [
+    Taller(nombre="Python para backend", instructor=Instructor(nombre="Ana López"), cupo=20, activo=True)
 ]
 
-talleres_db: list[Taller] = list(DATOS_INICIALES)
+roles_db = [
+    Role(id="1", code="ADMINISTRADOR", name="Administrador", is_active=True),
+    Role(id="2", code="CONSULTA", name="Consulta", is_active=True)
+]
+
+permissions_db = [
+    Permission(id="1", code="talleres.write", name="Crear talleres", is_active=True),
+    Permission(id="2", code="talleres.read", name="Ver talleres", is_active=True)
+]
+
+role_permissions_db = {
+    "1": ["1", "2"],
+    "2": ["2"]
+}
+
+usuarios_roles_db = {
+    "user_admin": "1",
+    "user_normal": "2"
+}
+
+def exigir_permiso(user_id: str, codigo_permiso: str) -> None:
+    rol_id = usuarios_roles_db.get(user_id)
+    if not rol_id:
+        raise Exception("El usuario no tiene un rol activo asignado.")
+    
+    permisos_del_rol_ids = role_permissions_db.get(rol_id, [])
+    permisos_activos = [p.code for p in permissions_db if p.id in permisos_del_rol_ids]
+    
+    if codigo_permiso not in permisos_activos:
+        raise Exception(f"Operación rechazada. Tu rol no tiene el permiso: {codigo_permiso}")
 
 @strawberry.type
 class Query:
     @strawberry.field
-    def talleres(self) -> list[Taller]:
+    def talleres(self) -> List[Taller]:
         return talleres_db
 
     @strawberry.field
-    def taller(self, nombre: str) -> Optional[Taller]:
-        for t in talleres_db:
-            if t.nombre == nombre:
-                return t
-        return None
+    def roles(self) -> List[Role]:
+        return roles_db
 
     @strawberry.field
-    def talleres_activos(self) -> list[Taller]:
-        return [t for t in talleres_db if t.activo]
+    def permissions(self) -> List[Permission]:
+        return permissions_db
 
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    def agregar_taller(self, taller: AgregarTallerInput) -> Taller:
-        nuevo_taller = Taller(
-            nombre=taller.nombre,
-            instructor=Instructor(nombre=taller.instructor),
-            cupo=taller.cupo,
-            activo=taller.activo,
-        )
-        talleres_db.append(nuevo_taller)
-        return nuevo_taller
+    def agregar_taller(self, taller: AgregarTallerInput, actor_user_id: str) -> Optional[Taller]:
+        try:
+            exigir_permiso(actor_user_id, "talleres.write")
+            
+            nuevo_taller = Taller(
+                nombre=taller.nombre,
+                instructor=Instructor(nombre=taller.instructor),
+                cupo=taller.cupo,
+                activo=taller.activo,
+            )
+            talleres_db.append(nuevo_taller)
+            return nuevo_taller
+            
+        except Exception as e:
+            print(f"Error de acceso: {e}")
+            return None
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
